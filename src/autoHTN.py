@@ -2,7 +2,8 @@ import pyhop
 import json
 
 def check_enough(state, ID, item, num):
-    if getattr(state, item)[ID] >= num: return []
+    if getattr(state, item)[ID] >= num:
+        return []
     return False
 
 def produce_enough(state, ID, item, num):
@@ -104,17 +105,26 @@ if __name__ == '__main__':
     with open(rules_filename) as f:
         data = json.load(f)
 
-    state = set_up_state(data, 'agent', time=239) # allot time here
-    goals = set_up_goals(data, 'agent')
+    # Test cases
+    test_cases = [
+        ({'plank': 1}, {'plank': 1}, 0),
+        ({}, {'plank': 1}, 300),
+        ({'plank': 3, 'stick': 2}, {'wooden_pickaxe': 1}, 10),
+        ({}, {'iron_pickaxe': 1}, 100),
+        ({}, {'cart': 1, 'rail': 10}, 175),
+        ({}, {'cart': 1, 'rail': 20}, 250),
+        ({}, {'wood': 12}, 46)
+    ]
 
-    declare_operators(data)
-    declare_methods(data)
-    add_heuristic(data, 'agent')
+    for initial, goal, time in test_cases:
+        state = set_up_state(data, 'agent', time)
+        for item, num in initial.items():
+            setattr(state, item, {'agent': num})
+        goals = set_up_goals({'Goal': goal}, 'agent')
 
-    # pyhop.print_operators()
-    # pyhop.print_methods()
+        declare_operators(data)
+        declare_methods(data)
+        add_heuristic(data, 'agent')
 
-    # Hint: verbose output can take a long time even if the solution is correct; 
-    # try verbose=1 if it is taking too long
-    pyhop.pyhop(state, goals, verbose=3)
-    # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1),('have_enough', 'agent', 'rail', 20)], verbose=3)
+        print(f"Testing with initial: {initial}, goal: {goal}, time: {time}")
+        pyhop.pyhop(state, goals, verbose=3)
