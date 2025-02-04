@@ -2,103 +2,91 @@ import pyhop
 import json
 
 def check_enough(state, ID, item, num):
-    if getattr(state, item)[ID] >= num:
-        return []
-    return False
+    # Check if there is enough of the item
+    return [] if getattr(state, item)[ID] >= num else False
 
 def produce_enough(state, ID, item, num):
+    # Create tasks to produce the item if not enough
     return [('produce', ID, item), ('have_enough', ID, item, num)]
 
 pyhop.declare_methods('have_enough', check_enough, produce_enough)
 
 def produce(state, ID, item):
-    # Map the generic 'produce' task to the specific production task
+    # Create a task to produce the item
     return [('produce_{}'.format(item), ID)]
 
 pyhop.declare_methods('produce', produce)
 
 def make_method(name, rule):
+    # Generate a method for a given recipe
     def method(state, ID):
-        # Check if all required items and tools are available
-        for item, num in rule.get('Requires', {}).items():
-            if getattr(state, item).get(ID, 0) < num:
-                return False
-        for item, num in rule.get('Consumes', {}).items():
-            if getattr(state, item).get(ID, 0) < num:
-                return False
-        
-        # If all requirements are met, return the subtasks to produce the item
-        subtasks = []
-        for item, num in rule.get('Consumes', {}).items():
-            subtasks.append(('have_enough', ID, item, num))
-        subtasks.append(('op_{}'.format(name.replace(' ', '_')), ID))
-        return subtasks
-    
+        condition = [('have_enough', ID, k, v) for key, value in rule.items() if key != 'Produces' and isinstance(value, dict) for k, v in value.items()]
+        condition.append(('op_' + name, ID))
+        return condition
     return method
 
 def declare_methods(data):
-    # Sort recipes by their time efficiency (fastest recipes first)
-    recipes = data['Recipes']
-    sorted_recipes = sorted(recipes.items(), key=lambda x: x[1]['Time'])
-    
-    for name, rule in sorted_recipes:
-        method = make_method(name, rule)
-        pyhop.declare_methods('produce_{}'.format(name.replace(' ', '_')), method)
+    # Declare methods for each product
+    method_dict = {}
+    for key, value in sorted(data['Recipes'].items(), key=lambda item: item[1]["Time"], reverse=True):
+        key = key.replace(' ', '_')
+        for name_of_produce in value['Produces'].items():
+            my_method = make_method(key, value)
+            if name_of_produce in method_dict:
+                method_dict[name_of_produce].append(my_method)
+            else:
+                method_dict[name_of_produce] = [my_method]
+    for name, methods in method_dict.items():
+        pyhop.declare_methods('produce_' + name[0], *methods)
 
 def make_operator(rule):
+    # Generate an operator for a given recipe
     def operator(state, ID):
-        # Consume the required items
-        for item, num in rule.get('Consumes', {}).items():
-            if getattr(state, item).get(ID, 0) < num:
-                return False  # Not enough resources
-            getattr(state, item)[ID] -= num
-        
-        # Produce the desired item
-        for item, num in rule.get('Produces', {}).items():
-            getattr(state, item)[ID] = getattr(state, item).get(ID, 0) + num
-        
-        # Update the time
-        state.time[ID] += rule['Time']
-        
+        for key, value in rule.items():
+            if key == 'Produces':
+                for k, v in value.items():
+                    setattr(state, k, {ID: getattr(state, k)[ID] + v})
+            if key == 'Consumes':
+                for k, v in value.items():
+                    if getattr(state, k)[ID] >= v:
+                        setattr(state, k, {ID: getattr(state, k)[ID] - v})
+            if key == 'Time':
+                if state.time[ID] >= v:
+                    state.time[ID] -= v
+                else:
+                    return False
         return state
-    
     return operator
 
 def declare_operators(data):
-    # Declare operators for all recipes
-    recipes = data['Recipes']
-    
-    for name, rule in recipes.items():
-        operator = make_operator(rule)
-        pyhop.declare_operators(operator)
-        print(f"Declared operator: op_{name.replace(' ', '_')}")
+    # Declare operators for each recipe
+    operator_list = []
+    for key, value in sorted(data['Recipes'].items(), key=lambda item: item[1]["Time"], reverse=True):
+        key = key.replace(' ', '_')
+        operator_temp = make_operator(value)
+        operator_temp.__name__ = 'op_' + key
+        operator_list.append(operator_temp)
+    pyhop.declare_operators(*operator_list)
 
 def add_heuristic(data, ID):
-    # Prune search branch if heuristic() returns True
+    # Add heuristic to prune search branches
     def heuristic(state, curr_task, tasks, plan, depth, calling_stack):
-        # Prune the branch if the current time exceeds the allotted time
-        if state.time.get(ID, 0) > 239:  # Assuming 239 is the allotted time
-            return True
-        return False
-    
+        return curr_task not in tasks
     pyhop.add_check(heuristic)
 
 def set_up_state(data, ID, time=0):
+    # Initialize the state with items, tools, and initial quantities
     state = pyhop.State('state')
     state.time = {ID: time}
-    for item in data['Items']:
-        setattr(state, item, {ID: 0})
-    for item in data['Tools']:
+    for item in data['Items'] + data['Tools']:
         setattr(state, item, {ID: 0})
     for item, num in data['Initial'].items():
         setattr(state, item, {ID: num})
     return state
 
 def set_up_goals(data, ID):
-    goals = []
-    for item, num in data['Goal'].items():
-        goals.append(('have_enough', ID, item, num))
-    return goals
+    # Set up goals based on desired quantities of items
+    return [('have_enough', ID, item, num) for item, num in data['Goal'].items()]
 
 if __name__ == '__main__':
     rules_filename = 'crafting.json'
@@ -107,11 +95,9 @@ if __name__ == '__main__':
     
     state = set_up_state(data, 'agent', time=239)  # Allot time here
     goals = set_up_goals(data, 'agent')
-    
     declare_operators(data)
     declare_methods(data)
     add_heuristic(data, 'agent')
-    
     pyhop.print_operators()
     pyhop.print_methods()
     # Hint: verbose output can take a long time even if the solution is correct; 
