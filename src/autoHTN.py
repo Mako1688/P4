@@ -88,19 +88,45 @@ def set_up_goals(data, ID):
     # Set up goals based on desired quantities of items
     return [('have_enough', ID, item, num) for item, num in data['Goal'].items()]
 
+def run_test_case(data, initial, goal, max_time):
+    state = set_up_state(data, 'agent', time=max_time)
+    for item, num in initial.items():
+        setattr(state, item, {'agent': num})
+    goals = [('have_enough', 'agent', item, num) for item, num in goal.items()]
+    result = pyhop.pyhop(state, goals, verbose=1)
+    return result
+
+def calculate_total_time(actions, data):
+    total_time = 0
+    for action in actions:
+        op_name = action[0]
+        for key, value in data['Recipes'].items():
+            if 'op_' + key.replace(' ', '_') == op_name:
+                total_time += value['Time']
+                break
+    return total_time
+
 if __name__ == '__main__':
     rules_filename = 'crafting.json'
     with open(rules_filename) as f:
         data = json.load(f)
     
-    state = set_up_state(data, 'agent', time=239)  # Allot time here
-    goals = set_up_goals(data, 'agent')
     declare_operators(data)
     declare_methods(data)
     add_heuristic(data, 'agent')
-    pyhop.print_operators()
-    pyhop.print_methods()
-    # Hint: verbose output can take a long time even if the solution is correct; 
-    # try verbose=1 if it is taking too long
-    pyhop.pyhop(state, goals, verbose=3)
-    # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1),('have_enough', 'agent', 'rail', 20)], verbose=3)
+
+    test_cases = [
+        ({'plank': 1}, {'plank': 1}, 0),
+        ({}, {'plank': 1}, 300),
+        ({'plank': 3, 'stick': 2}, {'wooden_pickaxe': 1}, 10),
+        ({}, {'iron_pickaxe': 1}, 100),
+        ({}, {'cart': 1, 'rail': 10}, 175),
+        ({}, {'cart': 1, 'rail': 20}, 250)
+    ]
+
+    for i, (initial, goal, max_time) in enumerate(test_cases):
+        print(f"Running test case {i+1}")
+        result = run_test_case(data, initial, goal, max_time)
+        total_time = calculate_total_time(result, data)
+        print(f"Test case {i+1} result: {result}")
+        print(f"Total time: {total_time} (Max time: {max_time})\n")
