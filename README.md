@@ -10,47 +10,14 @@ This project implements a Hierarchical Task Network (HTN) planner for crafting i
 
 ## How It Works
 
-### Functions
+### Heuristics
 
-1. **check_enough(state, ID, item, num)**
-   - Checks if there is enough of the specified item in the state.
-   - Returns an empty list if there is enough, otherwise returns `False`.
+1. **heuristic**
+   - Checks if the current task is already in the task list
 
-2. **produce_enough(state, ID, item, num)**
-   - Creates tasks to produce the specified item if there isn't enough.
-   - Returns a list of tasks to produce the item and then check if there is enough.
+2. **heuristic2**
+   - Makes sure the depth doesnt go further than 500.
 
-3. **produce(state, ID, item)**
-   - Creates a task to produce the specified item.
-   - Returns a list with a single task to produce the item.
-
-4. **make_method(name, rule)**
-   - Generates a method for a given recipe.
-   - The method checks if required and consumed items are available and then adds a production task.
-
-5. **declare_methods(data)**
-   - Declares methods for each product based on the recipes.
-   - Organizes recipes by the product they produce and sorts them by time.
-
-6. **make_operator(rule)**
-   - Generates an operator for a given recipe.
-   - The operator checks if there is enough time and required items, consumes items, produces output, and updates the state.
-
-7. **declare_operators(data)**
-   - Declares operators for each recipe.
-   - Iterates through recipes, creates operators, and declares them to `pyhop`.
-
-8. **add_heuristic(data, ID)**
-   - Adds heuristic checks to prune the search space.
-   - Includes checks to avoid deep recursion and overproducing items.
-
-9. **set_up_state(data, ID, time=0)**
-   - Initializes the state with given items, tools, and initial quantities.
-   - Sets the initial time for the agent.
-
-10. **set_up_goals(data, ID)**
-    - Sets up the goals based on the desired quantities of items.
-    - Returns a list of goals to achieve.
 
 ### Main Execution
 

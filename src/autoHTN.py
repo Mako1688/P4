@@ -18,6 +18,7 @@ pyhop.declare_methods('produce', produce)
 
 def make_method (name, rule):
 	def method (state, ID):
+     	# your code here
 		final = []
 		for key, value in rule.items():
 			if key != 'Produces':
@@ -32,6 +33,10 @@ def make_method (name, rule):
 	return method
 
 def declare_methods (data):
+    # some recipes are faster than others for the same product even though they might require extra tools
+	# sort the recipes so that faster recipes go first
+	# your code here
+	# hint: call make_method, then declare the method to pyhop using pyhop.declare_methods('foo', m1, m2, ..., mk
 	methodList = []
 	for recipeName in data["Recipes"].keys():
 		rules = data["Recipes"][recipeName]
@@ -57,10 +62,6 @@ def declare_methods (data):
 			method.__name__ = method.__name__.replace(' ', '_')
 			temp.append(method)
 		pyhop.declare_methods("produce_" + item[0], *temp)
-
-	# hint: call make_method, then declare the method to pyhop using pyhop.declare_methods('foo', m1, m2, ..., mk)	
-	# pyhop.print_methods()
-	pass
 
 
 def make_operator (rule):
@@ -105,11 +106,9 @@ def add_heuristic (data, ID):
 		if curr_task in tasks:
 			return False
 		return True
-		return tasks
 	
 	def heuristic2 (state, curr_task, tasks, plan, depth, calling_stack):
 		return depth > 500
-		# if True, prune this branch
 
 	pyhop.add_check(heuristic)
 	pyhop.add_check(heuristic2)
@@ -135,7 +134,7 @@ if __name__ == '__main__':
         data = json.load(f)
 
     state = set_up_state(data, 'agent', time=250) # Set time
-    goals = set_up_goals(data, 'agent')  # Set up the goals
+    goals = set_up_goals(data, 'agent')
 
     declare_operators(data)  
     declare_methods(data)  
@@ -146,14 +145,13 @@ if __name__ == '__main__':
     
 	# Hint: verbose output can take a long time even if the solution is correct; 
 	# try verbose=1 if it is taking too long
-    # pyhop.pyhop(state, goals, verbose=3)
-    # pyhop.pyhop(state, [('have_enough', 'agent', 'wood', 12)], verbose=1)
+    pyhop.pyhop(state, goals, verbose=3)
     # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1),('have_enough', 'agent', 'rail', 20)], verbose=3)
     
     # Test cases
     # pyhop.pyhop(state, [('have_enough', 'agent', 'plank', 1)], verbose=3)  # a. Given {'plank': 1}, achieve {'plank': 1} [time <= 0]
     # pyhop.pyhop(state, [('have_enough', 'agent', 'plank', 1)], verbose=1)  # b. Given {}, achieve {'plank': 1} [time <= 300]
     # pyhop.pyhop(state, [('have_enough', 'agent', 'wooden_pickaxe', 1)], verbose=3)  # c. Given {'plank': 3, 'stick': 2}, achieve {'wooden_pickaxe': 1} [time <= 10]
-    pyhop.pyhop(state, [('have_enough', 'agent', 'iron_pickaxe', 1)], verbose=3)  # d. Given {}, achieve {'iron_pickaxe': 1} [time <= 100]
+    # pyhop.pyhop(state, [('have_enough', 'agent', 'iron_pickaxe', 1)], verbose=3)  # d. Given {}, achieve {'iron_pickaxe': 1} [time <= 100]
     # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1), ('have_enough', 'agent', 'rail', 10)], verbose=1)  # e. Given {}, achieve {'cart': 1, 'rail': 10} [time <= 175]
     # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1), ('have_enough', 'agent', 'rail', 20)], verbose=1)  # f. Given {}, achieve {'cart': 1, 'rail': 20} [time <= 250]
