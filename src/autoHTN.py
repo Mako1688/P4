@@ -32,21 +32,11 @@ def make_method (name, rule):
 	return method
 
 def declare_methods (data):
-	# some recipes are faster than others for the same product even though they might require extra tools
-	# sort the recipes so that faster recipes go first
-
-	# your code here
-	### TODO
-	# I gotta redo declare methods
-	# New approach: First make the methods from the Recipes
-	# Then: Sort the methods into common items(all the cobble methods go in one place)
 	methodList = []
 	for recipeName in data["Recipes"].keys():
 		rules = data["Recipes"][recipeName]
 		method = make_method(recipeName, rules)
 		methodList.append(method)
-	# now I need to sort the methods by the item
-	# CREATE A SORTING METHOD THAT RETURNS A DICT OF ITEMS AND VALUESfor key, value in sorted(data['Recipes'].items(), key=lambda item: item[1]["Time"], reverse=True):
 	dict_methods = {}
 	for key, value in sorted(data['Recipes'].items(), key=lambda item: item[1]["Time"], reverse=True):
 		key = key.replace(" ", "_")
@@ -61,11 +51,9 @@ def declare_methods (data):
 				cur_method = make_method(key, value)
 				dict_methods[name] = [cur_method]
 	sortedMethods = dict_methods
-	# time to declare all the methods
 	for item, temp in sortedMethods.items():
 		temp = []
 		for method in sortedMethods[item]:
-			#replace spaces with underscores
 			method.__name__ = method.__name__.replace(' ', '_')
 			temp.append(method)
 		pyhop.declare_methods("produce_" + item[0], *temp)
@@ -165,7 +153,7 @@ if __name__ == '__main__':
     # Test cases
     # pyhop.pyhop(state, [('have_enough', 'agent', 'plank', 1)], verbose=3)  # a. Given {'plank': 1}, achieve {'plank': 1} [time <= 0]
     # pyhop.pyhop(state, [('have_enough', 'agent', 'plank', 1)], verbose=1)  # b. Given {}, achieve {'plank': 1} [time <= 300]
-    pyhop.pyhop(state, [('have_enough', 'agent', 'wooden_pickaxe', 1)], verbose=3)  # c. Given {'plank': 3, 'stick': 2}, achieve {'wooden_pickaxe': 1} [time <= 10]
-    # pyhop.pyhop(state, [('have_enough', 'agent', 'iron_pickaxe', 1)], verbose=1)  # d. Given {}, achieve {'iron_pickaxe': 1} [time <= 100]
+    # pyhop.pyhop(state, [('have_enough', 'agent', 'wooden_pickaxe', 1)], verbose=3)  # c. Given {'plank': 3, 'stick': 2}, achieve {'wooden_pickaxe': 1} [time <= 10]
+    pyhop.pyhop(state, [('have_enough', 'agent', 'iron_pickaxe', 1)], verbose=3)  # d. Given {}, achieve {'iron_pickaxe': 1} [time <= 100]
     # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1), ('have_enough', 'agent', 'rail', 10)], verbose=1)  # e. Given {}, achieve {'cart': 1, 'rail': 10} [time <= 175]
     # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1), ('have_enough', 'agent', 'rail', 20)], verbose=1)  # f. Given {}, achieve {'cart': 1, 'rail': 20} [time <= 250]
