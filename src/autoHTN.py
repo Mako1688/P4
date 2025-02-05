@@ -159,6 +159,13 @@ if __name__ == '__main__':
 	# Hint: verbose output can take a long time even if the solution is correct; 
 	# try verbose=1 if it is taking too long
     # pyhop.pyhop(state, goals, verbose=3)
-    pyhop.pyhop(state, [('have_enough', 'agent', 'wood', 12)], verbose=1)
+    # pyhop.pyhop(state, [('have_enough', 'agent', 'wood', 12)], verbose=1)
     # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1),('have_enough', 'agent', 'rail', 20)], verbose=3)
-	# pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1),('have_enough', 'agent', 'rail', 20)], verbose=3)
+    
+    # Test cases
+    # pyhop.pyhop(state, [('have_enough', 'agent', 'plank', 1)], verbose=1)  # a. Given {'plank': 1}, achieve {'plank': 1} [time <= 0]
+    # pyhop.pyhop(state, [('have_enough', 'agent', 'plank', 1)], verbose=1)  # b. Given {}, achieve {'plank': 1} [time <= 300]
+    pyhop.pyhop(state, [('have_enough', 'agent', 'wooden_pickaxe', 1)], verbose=1)  # c. Given {'plank': 3, 'stick': 2}, achieve {'wooden_pickaxe': 1} [time <= 10]
+    # pyhop.pyhop(state, [('have_enough', 'agent', 'iron_pickaxe', 1)], verbose=1)  # d. Given {}, achieve {'iron_pickaxe': 1} [time <= 100]
+    # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1), ('have_enough', 'agent', 'rail', 10)], verbose=1)  # e. Given {}, achieve {'cart': 1, 'rail': 10} [time <= 175]
+    # pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1), ('have_enough', 'agent', 'rail', 20)], verbose=1)  # f. Given {}, achieve {'cart': 1, 'rail': 20} [time <= 250]
