@@ -202,9 +202,12 @@ def pyhop(state,tasks,verbose=0):
     Try to find a plan that accomplishes tasks in state. 
     If successful, return the plan. Otherwise return False.
     """
-    if verbose>0: print('** pyhop, verbose={}: **\n   state = {}\n   tasks = {}'.format(verbose, state.__name__, tasks))
+    if verbose>0: 
+        print_state(state)
+        print('** pyhop, verbose={}: **\n   state = {}\n   tasks = {}'.format(verbose, state.__name__, tasks))
     result = seek_plan(state,tasks,[],0,verbose)
     if verbose>0: print('** result =',result,'\n')
+    
     return result
 
 # cm146 modification: add calling stack as parameter
