@@ -3,22 +3,22 @@ from sys import settrace
 import pyhop
 import json
 
-def check_enough (state, ID, item, num):
-	if getattr(state,item)[ID] >= num: return []
-	return False
+def check_enough(state, ID, item, num):
+    if getattr(state, item)[ID] >= num:
+        return []
+    return False
 
-def produce_enough (state, ID, item, num):
-	return [('produce', ID, item), ('have_enough', ID, item, num)]
+def produce_enough(state, ID, item, num):
+    return [('produce', ID, item), ('have_enough', ID, item, num)]
 
-pyhop.declare_methods ('have_enough', check_enough, produce_enough)
+pyhop.declare_methods('have_enough', check_enough, produce_enough)
 
-def produce (state, ID, item):
-	return [('produce_{}'.format(item), ID)]
+def produce(state, ID, item):
+    return [('produce_{}'.format(item), ID)]
 
-pyhop.declare_methods ('produce', produce)
+pyhop.declare_methods('produce', produce)
 
 def make_method(name, rule):
-    # Generate a method for a given recipe
     def method(state, ID):
         subTasks = []  # Initialize the list of subtasks
         for prereq in rule["Recipes"][name]:  # Iterate over the prerequisites of the recipe
@@ -76,7 +76,6 @@ def declare_methods(data):
         methods.clear()  # Clear the list of methods
 
 def make_operator(rule):
-    # Generate an operator for a given recipe
     def operator(state, ID):
         for element in rule:  # Iterate over the elements in the rule
             if element == 'Produces':  # If the element is a production
@@ -161,50 +160,20 @@ def set_up_goals(data, ID):
     # Set up goals based on desired quantities of items
     return [('have_enough', ID, item, num) for item, num in data['Goal'].items()]
 
-def run_test_case(data, initial, goal, max_time):
-    state = set_up_state(data, 'agent', time=max_time)
-    for item, num in initial.items():
-        setattr(state, item, {'agent': num})
-    goals = [('have_enough', 'agent', item, num) for item, num in goal.items()]
-    result = pyhop.pyhop(state, goals, verbose=1)
-    return result
-
-def calculate_total_time(actions, data):
-    total_time = 0
-    for action in actions:
-        op_name = action[0]
-        for key, value in data['Recipes'].items():
-            if 'op_' + key.replace(' ', '_') == op_name:
-                total_time += value['Time']
-                break
-    return total_time
-
 if __name__ == '__main__':
-    rules_filename = 'crafting.json'
+    rules_filename = 'crafting.json'  # Set the filename for the crafting rules
 
-    with open(rules_filename) as f:
-        data = json.load(f)
+    with open(rules_filename) as f:  # Open the crafting rules file
+        data = json.load(f)  # Load the crafting rules from the file
 
-    # Test cases
-    test_cases = [
-        ({'plank': 1}, {'plank': 1}, 0),
-        ({}, {'plank': 1}, 300),
-        ({'plank': 3, 'stick': 2}, {'wooden_pickaxe': 1}, 10),
-        ({}, {'iron_pickaxe': 1}, 100),
-        ({}, {'cart': 1, 'rail': 10}, 175),
-        ({}, {'cart': 1, 'rail': 20}, 250),
-        ({}, {'wood': 12}, 46)
-    ]
+    state = set_up_state(data, 'agent', time=300)  # Set up the initial state with 300 time units
+    goals = set_up_goals(data, 'agent')  # Set up the goals
 
-    for initial, goal, time in test_cases:
-        state = set_up_state(data, 'agent', time)
-        for item, num in initial.items():
-            setattr(state, item, {'agent': num})
-        goals = set_up_goals({'Goal': goal}, 'agent')
+    declare_operators(data)  # Declare the operators
+    declare_methods(data)  # Declare the methods
+    add_heuristic(data, 'agent')  # Add the heuristics
 
-        declare_operators(data)
-        declare_methods(data)
-        add_heuristic(data, 'agent')
+    pyhop.print_operators()  # Print the operators
+    pyhop.print_methods()  # Print the methods
 
-        print(f"Testing with initial: {initial}, goal: {goal}, time: {time}")
-        pyhop.pyhop(state, goals, verbose=3)
+    pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1), ('have_enough', 'agent', 'rail', 20)], verbose=1)  # Run the planner with the specified goals and verbosity level
