@@ -18,6 +18,7 @@ def produce (state, ID, item):
 pyhop.declare_methods ('produce', produce)
 
 def make_method(name, rule):
+    # Generate a method for a given recipe
     def method(state, ID):
         subTasks = []  # Initialize the list of subtasks
         for prereq in rule["Recipes"][name]:  # Iterate over the prerequisites of the recipe
@@ -75,6 +76,7 @@ def declare_methods(data):
         methods.clear()  # Clear the list of methods
 
 def make_operator(rule):
+    # Generate an operator for a given recipe
     def operator(state, ID):
         for element in rule:  # Iterate over the elements in the rule
             if element == 'Produces':  # If the element is a production
@@ -146,45 +148,63 @@ def add_heuristic(data, ID):
     pyhop.add_check(prune_duplicate_tool_creation)  # Add the prune_duplicate_tool_creation heuristic to pyhop
     
 def set_up_state(data, ID, time=0):
+    # Initialize the state with items, tools, and initial quantities
     state = pyhop.State('state')
     state.time = {ID: time}
-
-    for item in data['Items']:
+    for item in data['Items'] + data['Tools']:
         setattr(state, item, {ID: 0})
-
-    for item in data['Tools']:
-        setattr(state, item, {ID: 0})
-
     for item, num in data['Initial'].items():
         setattr(state, item, {ID: num})
-
     return state
 
 def set_up_goals(data, ID):
-    goals = []
-    for item, num in data['Goal'].items():
-        goals.append(('have_enough', ID, item, num))
+    # Set up goals based on desired quantities of items
+    return [('have_enough', ID, item, num) for item, num in data['Goal'].items()]
 
-    return goals
+def run_test_case(data, initial, goal, max_time):
+    state = set_up_state(data, 'agent', time=max_time)
+    for item, num in initial.items():
+        setattr(state, item, {'agent': num})
+    goals = [('have_enough', 'agent', item, num) for item, num in goal.items()]
+    result = pyhop.pyhop(state, goals, verbose=1)
+    return result
+
+def calculate_total_time(actions, data):
+    total_time = 0
+    for action in actions:
+        op_name = action[0]
+        for key, value in data['Recipes'].items():
+            if 'op_' + key.replace(' ', '_') == op_name:
+                total_time += value['Time']
+                break
+    return total_time
 
 if __name__ == '__main__':
-	rules_filename = 'crafting.json'
+    rules_filename = 'crafting.json'
 
-	with open(rules_filename) as f:
-		data = json.load(f)
-	#print(data)
-	state = set_up_state(data, 'agent', time=300) # allot time here
-	goals = set_up_goals(data, 'agent')
+    with open(rules_filename) as f:
+        data = json.load(f)
 
-	declare_operators(data)
-	declare_methods(data)
-	add_heuristic(data, 'agent')
+    # Test cases
+    test_cases = [
+        ({'plank': 1}, {'plank': 1}, 0),
+        ({}, {'plank': 1}, 300),
+        ({'plank': 3, 'stick': 2}, {'wooden_pickaxe': 1}, 10),
+        ({}, {'iron_pickaxe': 1}, 100),
+        ({}, {'cart': 1, 'rail': 10}, 175),
+        ({}, {'cart': 1, 'rail': 20}, 250),
+        ({}, {'wood': 12}, 46)
+    ]
 
-	pyhop.print_operators()
-	pyhop.print_methods()
+    for initial, goal, time in test_cases:
+        state = set_up_state(data, 'agent', time)
+        for item, num in initial.items():
+            setattr(state, item, {'agent': num})
+        goals = set_up_goals({'Goal': goal}, 'agent')
 
-	# Hint: verbose output can take a long time even if the solution is correct; 
-	# try verbose=1 if it is taking too long
-	# pyhop.pyhop(state, goals, verbose=3)
-	#pyhop.pyhop(state, ('have_enough', 'agent', 'wood', 1), verbose=3)
-	pyhop.pyhop(state, [('have_enough', 'agent', 'cart', 1),('have_enough', 'agent', 'rail', 20)], verbose=1)
+        declare_operators(data)
+        declare_methods(data)
+        add_heuristic(data, 'agent')
+
+        print(f"Testing with initial: {initial}, goal: {goal}, time: {time}")
+        pyhop.pyhop(state, goals, verbose=3)

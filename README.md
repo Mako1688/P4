@@ -1,29 +1,71 @@
-# AutoHTN
+# Hierarchical Task Network (HTN) Planning for Minecraft
 
 ## Overview
 
-AutoHTN is a hierarchical task network (HTN) planner designed to solve crafting problems. Given a set of initial resources and a goal, it determines the sequence of actions required to achieve the goal within a specified time limit.
+This project implements a Hierarchical Task Network (HTN) planner for crafting items in Minecraft. The planner uses the `pyhop` library to generate a sequence of actions to achieve specified goals based on given recipes and initial state.
 
-## Heuristics
+## Files
 
-The heuristic function used in AutoHTN is designed to prune the search space to improve planning efficiency. The primary heuristic implemented is a time-based pruning heuristic:
+- `autoHTN.py`: The main script that sets up the HTN planner and executes the planning process.
 
-- **Time-Based Pruning**: This heuristic prunes any search branch where the accumulated time exceeds a specified threshold (e.g., 240 units of time). This helps in focusing the search on feasible plans that can be completed within the given time constraints.
+## How It Works
 
-## Test Cases
+### Functions
 
-The following test cases are used to validate the planner:
+1. **check_enough(state, ID, item, num)**
+   - Checks if there is enough of the specified item in the state.
+   - Returns an empty list if there is enough, otherwise returns `False`.
 
-1. **Given**: `{'plank': 1}`, **Achieve**: `{'plank': 1}`, **Time**: `<= 0`
-2. **Given**: `{}`, **Achieve**: `{'plank': 1}`, **Time**: `<= 300`
-3. **Given**: `{'plank': 3, 'stick': 2}`, **Achieve**: `{'wooden_pickaxe': 1}`, **Time**: `<= 10`
-4. **Given**: `{}`, **Achieve**: `{'iron_pickaxe': 1}`, **Time**: `<= 100`
-5. **Given**: `{}`, **Achieve**: `{'cart': 1, 'rail': 10}`, **Time**: `<= 175`
-6. **Given**: `{}`, **Achieve**: `{'cart': 1, 'rail': 20}`, **Time**: `<= 250`
+2. **produce_enough(state, ID, item, num)**
+   - Creates tasks to produce the specified item if there isn't enough.
+   - Returns a list of tasks to produce the item and then check if there is enough.
 
-## Usage
+3. **produce(state, ID, item)**
+   - Creates a task to produce the specified item.
+   - Returns a list with a single task to produce the item.
 
-To run the planner, execute the `autoHTN.py` script. The script will load the crafting rules from `crafting.json`, set up the initial state and goals, and then run the planner for each test case.
+4. **make_method(name, rule)**
+   - Generates a method for a given recipe.
+   - The method checks if required and consumed items are available and then adds a production task.
 
-```bash
-python autoHTN.py
+5. **declare_methods(data)**
+   - Declares methods for each product based on the recipes.
+   - Organizes recipes by the product they produce and sorts them by time.
+
+6. **make_operator(rule)**
+   - Generates an operator for a given recipe.
+   - The operator checks if there is enough time and required items, consumes items, produces output, and updates the state.
+
+7. **declare_operators(data)**
+   - Declares operators for each recipe.
+   - Iterates through recipes, creates operators, and declares them to `pyhop`.
+
+8. **add_heuristic(data, ID)**
+   - Adds heuristic checks to prune the search space.
+   - Includes checks to avoid deep recursion and overproducing items.
+
+9. **set_up_state(data, ID, time=0)**
+   - Initializes the state with given items, tools, and initial quantities.
+   - Sets the initial time for the agent.
+
+10. **set_up_goals(data, ID)**
+    - Sets up the goals based on the desired quantities of items.
+    - Returns a list of goals to achieve.
+
+### Main Execution
+
+1. **Load Data**
+   - The script reads the `crafting.json` file to get the data.
+
+2. **Set Up State and Goals**
+   - Initializes the state and goals based on the data.
+
+3. **Declare Operators and Methods**
+   - Declares operators and methods for the recipes.
+
+4. **Add Heuristic**
+   - Adds heuristic checks to prune the search space.
+
+5. **Run Planner**
+   - Calls `pyhop.pyhop` to find a plan to achieve the goals from the initial state.
+   - The planner uses the methods and operators defined in the script to generate a sequence of actions.
