@@ -1,4 +1,4 @@
-# Hierarchical Task Network (HTN) Planning for Minecraft
+# Hierarchical Task Network (HTN) Planning for Minecraft - autoHTN.py
 
 ## Overview
 
@@ -13,7 +13,7 @@ This project implements a Hierarchical Task Network (HTN) planner for crafting i
 ### Heuristics
 
 1. **heuristic**
-   - Checks if the current task is already in the task list
+   - Checks if the current task is already in the task list if so prune that branch.
 
 2. **heuristic2**
    - Makes sure the depth doesnt go further than 500.
