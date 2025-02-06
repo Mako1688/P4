@@ -1,4 +1,5 @@
 # Hierarchical Task Network (HTN) Planning for Minecraft - autoHTN.py
+by Marco Ogaz-Vega and Elvis Ho
 
 ## Overview
 
